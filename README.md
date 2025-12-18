@@ -74,7 +74,7 @@ fetch(`${url}?fileUrl=${fileUrl}`)
 
 ```bash
 # 安装
-yarn install 
+yarn install --ignore-engines
 
 # 运行
 yarn dev

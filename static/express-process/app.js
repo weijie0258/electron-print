@@ -26,6 +26,7 @@ const {
   deleteCache,
   wrapRandomFolder,
   printImage,
+  getPdfPageCount,
 } = require("./print/index.js");
 
 const [, , __static, httpPort = 45656, socketPort, cacheDir, deviceName] =
@@ -170,95 +171,120 @@ app.post("/print", (req, res, next) => {
 
   let respondData = {};
   if (fileUrl) {
-    if (downloadOptions.pages == "1-999") {
-      let downloadOptionsBill = { ...downloadOptions, pages: "1-1" };
-      let downloadOptionsList = {
-        ...downloadOptions,
-        orientation: downloadOptions.orientationList,
-        paperSize: downloadOptions.paperSizeList,
-        pages: "2-99",
-      };
-      console.log("同时打印", downloadOptionsBill, downloadOptionsList);
-      const printInfo1 = createPrintInfo(
-        downloadOptions.url,
-        true,
-        downloadOptionsBill
-      );
-      const printInfo2 = createPrintInfo(
-        downloadOptions.url,
-        true,
-        downloadOptionsList
-      );
-      let billFlag = false;
-      let listFlag = false;
-      const printCallback1 = (status = 1, e) => {
-        // 成功
-        if (status === 1) {
-          billFlag = true;
-        }
-      };
-      const printCallback2 = (status = 1, e) => {
-        // 成功
-        if (status === 1) {
-          listFlag = true;
-          // 全部打印完成
-          if (billFlag && listFlag) {
-            respondData = {
-              code: "200",
-              message: `打印完成`,
-            };
-          }
-          // 清单打印成功 票据失败
-          if (billFlag == false && listFlag) {
-            respondData = {
-              code: "200",
-              message: `清单打印完成, 票据异常`,
-            };
-          }
-        } else {
-          if (billFlag) {
-            respondData = {
-              code: "200",
-              message: `票据打印完成, 清单异常`,
-            };
-          } else {
-            respondData = {
-              code: "500",
-              message: `${e}`,
-            };
-          }
-        }
-        res.send(respondData);
-      };
-      printScheduler.insert(printInfo1, printCallback1);
-      printScheduler.insert(printInfo2, printCallback2);
-    } else {
-      console.log("downloadOptions", downloadOptions);
-      const printInfo = createPrintInfo(
-        downloadOptions.url,
-        true,
-        downloadOptions
-      );
+    console.log("downloadOptions", downloadOptions);
+    const printInfo = createPrintInfo(
+      downloadOptions.url,
+      true,
+      downloadOptions
+    );
 
-      const printCallback = (status = 1, e) => {
-        // 成功
-        if (status === 1) {
-          respondData = {
-            code: "200",
-            message: `打印完成`,
-          };
-        } else {
-          respondData = {
-            code: "500",
-            message: `${e}`,
-          };
-        }
+    const printCallback = (status = 1, e) => {
+      // 成功
+      if (status === 1) {
+        respondData = {
+          code: "200",
+          message: `打印完成`,
+        };
+      } else {
+        respondData = {
+          code: "500",
+          message: `${e}`,
+        };
+      }
 
-        res.send(respondData);
-      };
+      res.send(respondData);
+    };
 
-      printScheduler.insert(printInfo, printCallback);
-    }
+    printScheduler.insert(printInfo, printCallback);
+    // if (downloadOptions.pages == "1-999") {
+    //   let downloadOptionsBill = { ...downloadOptions, pages: "1-1" };
+    //   let downloadOptionsList = {
+    //     ...downloadOptions,
+    //     orientation: downloadOptions.orientationList,
+    //     paperSize: downloadOptions.paperSizeList,
+    //     pages: "2-99",
+    //   };
+    //   console.log("同时打印", downloadOptionsBill, downloadOptionsList);
+    //   const printInfo1 = createPrintInfo(
+    //     downloadOptions.url,
+    //     true,
+    //     downloadOptionsBill
+    //   );
+    //   const printInfo2 = createPrintInfo(
+    //     downloadOptions.url,
+    //     true,
+    //     downloadOptionsList
+    //   );
+    //   let billFlag = false;
+    //   let listFlag = false;
+    //   const printCallback1 = (status = 1, e) => {
+    //     // 成功
+    //     if (status === 1) {
+    //       billFlag = true;
+    //     }
+    //   };
+    //   const printCallback2 = (status = 1, e) => {
+    //     // 成功
+    //     if (status === 1) {
+    //       listFlag = true;
+    //       // 全部打印完成
+    //       if (billFlag && listFlag) {
+    //         respondData = {
+    //           code: "200",
+    //           message: `打印完成`,
+    //         };
+    //       }
+    //       // 清单打印成功 票据失败
+    //       if (billFlag == false && listFlag) {
+    //         respondData = {
+    //           code: "200",
+    //           message: `清单打印完成, 票据异常`,
+    //         };
+    //       }
+    //     } else {
+    //       if (billFlag) {
+    //         respondData = {
+    //           code: "200",
+    //           message: `票据打印完成, 清单异常`,
+    //         };
+    //       } else {
+    //         respondData = {
+    //           code: "500",
+    //           message: `${e}`,
+    //         };
+    //       }
+    //     }
+    //     res.send(respondData);
+    //   };
+    //   printScheduler.insert(printInfo1, printCallback1);
+    //   printScheduler.insert(printInfo2, printCallback2);
+    // } else {
+    //   console.log("downloadOptions", downloadOptions);
+    //   const printInfo = createPrintInfo(
+    //     downloadOptions.url,
+    //     true,
+    //     downloadOptions
+    //   );
+
+    //   const printCallback = (status = 1, e) => {
+    //     // 成功
+    //     if (status === 1) {
+    //       respondData = {
+    //         code: "200",
+    //         message: `打印完成`,
+    //       };
+    //     } else {
+    //       respondData = {
+    //         code: "500",
+    //         message: `${e}`,
+    //       };
+    //     }
+
+    //     res.send(respondData);
+    //   };
+
+    //   printScheduler.insert(printInfo, printCallback);
+    // }
   } else {
     respondData = {
       code: "400",
@@ -336,15 +362,60 @@ async function handlePrint({ fileUrl, downloadOptions }) {
 
     realFilename = filename;
 
-    // NOTE: 正式打印 ========== ↓
-    await dispatchByFileType(
-      handleFileType(fileType),
-      filename,
-      randomCacheDir,
-      fileUrl,
-      downloadOptions
-    );
-    // NOTE: 正式打印 ========== ↑
+    // ========== 新增：判断是否需要分两次打印 ========== ↓
+    if (
+      handleFileType(fileType) === "pdf" &&
+      downloadOptions.pages === "1-999"
+    ) {
+      const pdfPath = `${randomCacheDir}\\${filename}`;
+      const totalPages = await getPdfPageCount(pdfPath);
+
+      console.log(`PDF总页数: ${totalPages}`);
+
+      if (totalPages > 1) {
+        // 有多页，分两次打印
+        console.log("检测到多页PDF，分两次打印：票据(1-1) + 清单(2-99)");
+
+        // 第一次打印：票据 (1-1)
+        const billOptions = {
+          ...downloadOptions,
+          pages: "1-1",
+        };
+        await printPdf(randomCacheDir, filename, deviceName, billOptions);
+        console.log("票据打印完成");
+
+        // 第二次打印：清单 (2-99)
+        const listOptions = {
+          ...downloadOptions,
+          orientation: downloadOptions.orientationList,
+          paperSize: downloadOptions.paperSizeList,
+          pages: `2-${totalPages}`, // 使用实际页数而不是固定的99
+        };
+        await printPdf(randomCacheDir, filename, deviceName, listOptions);
+        console.log("清单打印完成");
+      } else {
+        // 只有1页，只打印票据
+        console.log("检测到单页PDF，只打印票据(1-1)");
+        const billOptions = {
+          ...downloadOptions,
+          pages: "1-1",
+        };
+        await printPdf(randomCacheDir, filename, deviceName, billOptions);
+        console.log("票据打印完成");
+      }
+    } else {
+      // ========== 原有逻辑：正常打印 ========== ↓
+      // NOTE: 正式打印 ========== ↓
+      await dispatchByFileType(
+        handleFileType(fileType),
+        filename,
+        randomCacheDir,
+        fileUrl,
+        downloadOptions
+      );
+      // NOTE: 正式打印 ========== ↑
+    }
+    // ========== 新增逻辑结束 ========== ↑
 
     status = true;
   } catch (e) {
